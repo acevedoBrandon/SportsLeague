@@ -12,5 +12,8 @@ namespace SportsLeague.Domain.Entities
         public string Phone { get; set; } = string.Empty;
         public string? WebsiteUrl { get; set; } = string.Empty;
         public SponsorCategory Category { get; set; }
+
+        // Navigation Properties
+        public ICollection<TournamentSponsor> TournamentSponsors { get; set; } = new List<TournamentSponsor>();
     }
 }

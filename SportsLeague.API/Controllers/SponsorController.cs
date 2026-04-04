@@ -15,15 +15,18 @@ namespace SportsLeague.API.Controllers
     public class SponsorController : ControllerBase
     {
         private readonly ISponsorService _sponsorService;
+        private readonly ITournamentSponsorService _tournamentSponsorService;
         private readonly IMapper _mapper;
         private readonly ILogger<SponsorController> _logger;
 
         public SponsorController(
         ISponsorService sponsorService,
+        ITournamentSponsorService tournamentSponsorService,
         IMapper mapper,
         ILogger<SponsorController> logger)
         {
             _sponsorService = sponsorService;
+            _tournamentSponsorService = tournamentSponsorService;
             _mapper = mapper;
             _logger = logger;
         }
@@ -130,6 +133,60 @@ namespace SportsLeague.API.Controllers
                 return NoContent();
             }
             catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/tournaments")]
+        public async Task<ActionResult> LinkTournament(int id, TournamentSponsorRequestDTO dto)
+        {
+            try
+            {
+                await _tournamentSponsorService.AssignSponsorAsync(
+                    dto.TournamentId,
+                    id,
+                    dto.ContractAmount
+                );
+
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("{id}/tournaments")]
+        public async Task<ActionResult<IEnumerable<TournamentSponsorResponseDTO>>> GetTournaments(int id)
+        {
+            try
+            {
+                var data = await _tournamentSponsorService.GetTournamentsBySponsorAsync(id);
+                var result = _mapper.Map<IEnumerable<TournamentSponsorResponseDTO>>(data);
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}/tournaments/{tournamentId}")]
+        public async Task<ActionResult> UnlinkTournament(int id, int tournamentId)
+        {
+            try
+            {
+                await _tournamentSponsorService.RemoveSponsorAsync(tournamentId, id);
+
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
             }

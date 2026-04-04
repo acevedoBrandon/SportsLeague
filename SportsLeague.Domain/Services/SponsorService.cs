@@ -70,6 +70,14 @@ namespace SportsLeague.Domain.Services
         public async Task<Sponsor> CreateAsync(Sponsor sponsor)
         {
             _logger.LogInformation("Creating new sponsor with name: {Name}", sponsor.Name);
+
+            if (!IsValidEmail(sponsor.ContactEmail))
+            {
+                _logger.LogWarning("Invalid email format: {Email}", sponsor.ContactEmail);
+                throw new InvalidOperationException(
+                    $"El email {sponsor.ContactEmail} no tiene un formato válido");
+            }
+
             var existsName = await _sponsorRepository.ExistsByNameAsync(sponsor.Name);
             var existsEmail = await _sponsorRepository.ExistByEmailAsync(sponsor.ContactEmail);
 
@@ -90,17 +98,42 @@ namespace SportsLeague.Domain.Services
             return await _sponsorRepository.CreateAsync(sponsor);
         }
 
-        public async Task UpdateAsync(int id, Sponsor Sponsor)
+        public async Task UpdateAsync(int id, Sponsor sponsor)
         {
             _logger.LogInformation("Updating sponsor with ID: {Id}", id);
             var existing = await _sponsorRepository.GetByIdAsync(id);
+
             if (existing == null) throw new KeyNotFoundException($"No se encontró el patrocinador con ID {id}");
 
-            existing.Name = Sponsor.Name;
-            existing.ContactEmail = Sponsor.ContactEmail;
-            existing.Phone = Sponsor.Phone;
-            existing.WebsiteUrl = Sponsor.WebsiteUrl;
-            existing.Category = Sponsor.Category;
+            if (!IsValidEmail(sponsor.ContactEmail))
+            {
+                _logger.LogWarning("Invalid email format: {Email}", sponsor.ContactEmail);
+                throw new InvalidOperationException(
+                    $"El email {sponsor.ContactEmail} no tiene un formato válido");
+            }
+
+            var existsName = await _sponsorRepository.ExistsByNameAsync(sponsor.Name);
+            var emailTaken = await _sponsorRepository.ExistByEmailAsync(sponsor.ContactEmail);
+
+            if (existsName)
+            {
+                _logger.LogWarning("Sponsor with name {Name} already exists", sponsor.Name);
+                throw new InvalidOperationException(
+                    $"Ya existe un patrocinador con el nombre {sponsor.Name}");
+            }
+
+            if (emailTaken && sponsor.ContactEmail != existing.ContactEmail)
+            {
+                _logger.LogWarning("Sponsor with email {Email} already exists", sponsor.ContactEmail);
+                throw new InvalidOperationException(
+                    $"Ya existe un patrocinador con el email {sponsor.ContactEmail}");
+            }
+
+            existing.Name = sponsor.Name;
+            existing.ContactEmail = sponsor.ContactEmail;
+            existing.Phone = sponsor.Phone;
+            existing.WebsiteUrl = sponsor.WebsiteUrl;
+            existing.Category = sponsor.Category;
 
             await _sponsorRepository.UpdateAsync(existing);
         }
@@ -133,6 +166,22 @@ namespace SportsLeague.Domain.Services
 
             _logger.LogInformation("Deleting sponsor with ID {Id}", id);
             await _sponsorRepository.DeleteAsync(id);
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
