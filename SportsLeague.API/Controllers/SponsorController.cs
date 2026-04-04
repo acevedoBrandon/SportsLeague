@@ -78,15 +78,22 @@ namespace SportsLeague.API.Controllers
         [HttpPost]
         public async Task<ActionResult<SponsorResponseDTO>> Create(SponsorRequestDTO dto)
         {
-            var sponsor = _mapper.Map<Sponsor>(dto);
-            var createdSponsor = await _sponsorService.CreateAsync(sponsor);
-            var responseDto = _mapper.Map<SponsorResponseDTO>(createdSponsor);
+            try
+            {
+                var sponsor = _mapper.Map<Sponsor>(dto);
+                var createdSponsor = await _sponsorService.CreateAsync(sponsor);
+                var responseDto = _mapper.Map<SponsorResponseDTO>(createdSponsor);
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = responseDto.Id },
-                responseDto
-            );
+                return CreatedAtAction(
+                    nameof(GetById),
+                    new { id = responseDto.Id },
+                    responseDto
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { error = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]

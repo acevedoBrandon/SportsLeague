@@ -180,7 +180,7 @@ public class LeagueDbContext : DbContext
             .IsUnique();
         });
 
-        // Tournament configuration
+        // TournamentSponsor configuration
         modelBuilder.Entity<TournamentSponsor>(entity =>
         {
             entity.HasKey (ts => ts.Id);
