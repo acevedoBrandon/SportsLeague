@@ -173,6 +173,10 @@ public class LeagueDbContext : DbContext
             // Índice único compuesto: nombre de sponsor único
             entity.HasIndex (s => s.Name)
             .IsUnique();
+
+            // Índice único compuesto: email de sponsor único
+            entity.HasIndex(s => s.ContactEmail)
+            .IsUnique();
         });
     }
 }
