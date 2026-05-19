@@ -1,28 +1,30 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SportsLeague.DataAccess.Context;
+﻿using SportsLeague.DataAccess.Context;
 using SportsLeague.Domain.Entities;
 using SportsLeague.Domain.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore;
 
-namespace SportsLeague.DataAccess.Repositories;
-
-public class CardRepository : GenericRepository<Card>, ICardRepository
+namespace SportsLeague.DataAccess.Repositories
 {
-    public CardRepository(LeagueDbContext context) : base(context) { }
-
-    public async Task<IEnumerable<Card>> GetByMatchAsync(int matchId)
+    public class CardRepository : GenericRepository<Card>, ICardRepository
     {
-        return await _dbSet
-            .Where(c => c.MatchId == matchId)
-            .OrderBy(c => c.Minute)
-            .ToListAsync();
-    }
+        public CardRepository(LeagueDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<Card>> GetByMatchWithDetailsAsync(int matchId)
-    {
-        return await _dbSet
-            .Where(c => c.MatchId == matchId)
-            .Include(c => c.Player)
-            .OrderBy(c => c.Minute)
-            .ToListAsync();
+        public async Task<IEnumerable<Card>> GetByMatchAsync(int matchId)
+        {
+            return await _dbSet
+                .Where(c => c.MatchId == matchId)
+                .OrderBy(c => c.Minute)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Card>> GetByMatchWithDetailsAsync(int matchId)
+        {
+            return await _dbSet
+                .Where(c => c.MatchId == matchId)
+                .Include(c => c.Player)
+                .ThenInclude(p => p.Team)
+                .OrderBy(c => c.Minute)
+                .ToListAsync();
+        }
     }
 }
